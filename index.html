@@ -43,35 +43,52 @@
 
 <script>
     async function askAI() {
-        const key = document.getElementById('apiKey').value;
+        const key = document.getElementById('apiKey').value.trim();
         const msg = document.getElementById('inputMsg').value;
         const gender = document.getElementById('gender').value;
         const responseDiv = document.getElementById('response');
 
-        if (!key) return alert("Por favor, pega tu nueva API Key.");
-        if (!msg) return alert("Escribe el mensaje.");
+        if (!key) return alert("Por favor, pega tu NUEVA API Key.");
+        if (!msg) return alert("Escribe el mensaje de la persona.");
 
         responseDiv.style.display = "block";
-        responseDiv.innerText = "Pensando...";
+        responseDiv.innerText = "Analizando el mensaje... 🚀";
 
-        const prompt = `Soy un chico de 14 años. Me han enviado esto: "${msg}". Es ${gender}. Dame 3 respuestas cortas, naturales y divertidas.`;
+        // Ajustamos la instrucción para que sea más natural
+        const promptText = `Tengo 14 años. Me han enviado este mensaje: "${msg}". 
+        La persona es ${gender}. 
+        Dame 3 opciones de respuesta muy naturales, cortas y con buena vibra. 
+        Evita sonar como un robot o demasiado formal. Usa lenguaje de chat.`;
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+            // URL actualizada a la versión v1 (más estable)
+            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+
+            const res = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
+                    contents: [{
+                        parts: [{ text: promptText }]
+                    }]
                 })
             });
 
             const data = await res.json();
-            if(data.error) throw new Error(data.error.message);
             
-            responseDiv.innerText = data.candidates[0].content.parts[0].text;
+            if (data.error) {
+                throw new Error(data.error.message);
+            }
+
+            if (data.candidates && data.candidates[0].content) {
+                responseDiv.innerText = data.candidates[0].content.parts[0].text;
+            } else {
+                responseDiv.innerText = "La IA no pudo generar una respuesta. Intenta con otro mensaje.";
+            }
+
         } catch (error) {
-            responseDiv.innerText = "Error: " + error.message;
-            console.error(error);
+            responseDiv.innerText = "Ups! Error: " + error.message;
+            console.error("Detalles del error:", error);
         }
     }
 </script>
